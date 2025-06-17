@@ -11,7 +11,7 @@ Arbol = q_inicial.copy()
 obstaculos = [
     (1, 1, 3, 3),
     (5, 2, 6, 5),
-    (7, 7, 9, 9)
+    (15, 15, 12, 9)
 ]
 
 def Configuracion_aleatoria():
@@ -77,7 +77,7 @@ def Extiende(q_rand):
 
 #-----------MAIN LOOP----------#
 
-iteraciones_maximas = 200
+iteraciones_maximas = 500
 
 iteracion = 1
 plt.figure(figsize=(6,6))
