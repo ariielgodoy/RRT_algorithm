@@ -1,10 +1,18 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+from shapely.geometry import LineString, Polygon
 
 q_inicial = np.array([[10, 10]])
 q_new = []
 epsilon = 0.5 #Este es el paso que se puede dar
 Arbol = q_inicial.copy()
+
+obstaculos = [
+    (1, 1, 3, 3),
+    (5, 2, 6, 5),
+    (7, 7, 9, 9)
+]
 
 def Configuracion_aleatoria():
     return np.random.randint(0, 21, size=(1,2)) #genera un array 1x2 de numeros aleatorios entre 0 y 10, que es la distancia maxima en mi mapa
@@ -37,6 +45,12 @@ def NuevaConfig(q_rand, q_near, q_new):
     if q_new[0] > 20 or q_new[1] > 20:
         return False
     
+    segmento = LineString([q_near, q_new])      #He decidido hacer esto asi porque en la vida real la intersección me la dará un sensor
+    for (x_min, y_min, x_max, y_max) in obstaculos:
+        pol = Polygon([(x_min, y_min), (x_max, y_min), (x_max, y_max), (x_min, y_max)])
+        if pol.intersects(segmento):
+            return False
+    
     return True
 
 def AnadeVertice(q_new):
@@ -63,16 +77,28 @@ def Extiende(q_rand):
 
 #-----------MAIN LOOP----------#
 
-iteraciones_maximas = 250
+iteraciones_maximas = 200
 
 iteracion = 1
 plt.figure(figsize=(6,6))
+ax = plt.gca()
+
+# Dibuja los obstáculos
+for (x_min, y_min, x_max, y_max) in obstaculos:
+    width = x_max - x_min
+    height = y_max - y_min
+    rect = patches.Rectangle((x_min, y_min), width, height, linewidth=1, edgecolor='r', facecolor='gray')
+    ax.add_patch(rect)
+
 
 for iteracion in range(iteraciones_maximas):
     q_rand = Configuracion_aleatoria()
     Extiende(q_rand[0])
 
-# Ahora pinta los puntos encima, en la MISMA figura
+
+
+
+#Ahora pinta los puntos encima, en la MISMA figura
 plt.scatter(Arbol[:,0], Arbol[:,1], c='blue', label='Nodos del árbol')
 plt.scatter(q_inicial[0,0], q_inicial[0,1], c='red', label='Nodo inicial')
 
