@@ -3,7 +3,8 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from shapely.geometry import LineString, Polygon
 
-q_inicial = np.array([[10, 10]])
+PuntoObjetivo = np.array([19, 19])
+q_inicial = np.array([[10, 10, 0]])
 q_new = []
 epsilon = 0.5 #Este es el paso que se puede dar
 Arbol = q_inicial.copy()
@@ -29,13 +30,15 @@ def VecinoMasProximo(q_rand, Arbol):
     return vertice_mas_cercano, mas_cerca
 
 
-#CUIDADO AQUI CON LA DIVISION POR CERO
+
 def GenerarPunto(q_near, q_rand):
-    vector = q_rand - q_near
+    vector = q_rand[:2] - q_near[:2]
     distancia = np.linalg.norm(vector)
     if distancia == 0:
         return q_near.copy()
-    q_new = q_near + epsilon * vector / distancia
+    q_new = np.zeros(3)
+    q_new[:2] = q_near[:2] + epsilon * vector / distancia
+    q_new[2] = q_near[2] + 1
     return q_new
 
 
@@ -63,6 +66,7 @@ def Extiende(q_rand):
     global Arbol
     q_near, distancia_punto = VecinoMasProximo(q_rand, Arbol)
     #que es la distancia euclidea al punto random
+    q_new = np.zeros(3)
     q_new = GenerarPunto(q_near, q_rand)
     if NuevaConfig(q_rand, q_near, q_new) and distancia_punto > epsilon:
         AnadeVertice(q_new)
@@ -73,11 +77,39 @@ def Extiende(q_rand):
     else:
         return "avanzado"
 
+def FormarArbol():
+    global Arbol
+    indice = 0
+    p_mas_cercano = np.zeros(3)
+    p_mas_cercano = VecinoMasProximo(PuntoObjetivo, Arbol)
+    siguiente_punto = p_mas_cercano[0][2]
+    print("nigga",siguiente_punto)
+    mejorArbol = np.array([p_mas_cercano[0]])
+    posicion = 0
+    for i in Arbol:
+        indice += 1
+        if np.array_equal(p_mas_cercano[0][:2], i[:2]):
+            posicion = indice
+            break
+    
+    punto = p_mas_cercano[0][:2]
+    while siguiente_punto > 0:
+        for iterador in range(posicion):
+            if (np.linalg.norm(Arbol[iterador,:2] - punto) <= epsilon + 0.1) and Arbol[iterador,2] == siguiente_punto-1:
+                mejorArbol = np.vstack((mejorArbol, Arbol[iterador]))
+                punto = Arbol[iterador][:2]
+                siguiente_punto -= 1
+                break
+    
+    return mejorArbol
 
+
+    
+    
 
 #-----------MAIN LOOP----------#
 
-iteraciones_maximas = 500
+iteraciones_maximas = 900
 
 iteracion = 1
 plt.figure(figsize=(6,6))
@@ -98,9 +130,18 @@ for iteracion in range(iteraciones_maximas):
 
 
 
-#Ahora pinta los puntos encima, en la MISMA figura
+mejorArbol = FormarArbol()
+
+print(mejorArbol)
+print("SEPARACION")
+print(Arbol)
+
+
 plt.scatter(Arbol[:,0], Arbol[:,1], c='blue', label='Nodos del árbol')
+plt.scatter(mejorArbol[:,0], mejorArbol[:,1], c='red', label='Arbol más cercano')
 plt.scatter(q_inicial[0,0], q_inicial[0,1], c='red', label='Nodo inicial')
+
+plt.scatter(PuntoObjetivo[0], PuntoObjetivo[1], c='green', label='Destino')
 
 plt.xlim(0, 20)
 plt.ylim(0, 20)
